@@ -113,7 +113,7 @@ All OS primitives go through the PAL to support Linux, FreeRTOS, and bare-metal:
 
 ```
 pal/linux/embedmq_pal.c    → pthread_mutex, sem_t, pthread_create
-pal/freertos/embedmq_pal.c → xSemaphore, xTaskCreate  (planned)
+pal/freertos/embedmq_pal.c → xSemaphoreCreateCounting/Mutex, xTaskCreate + vTaskDelete join
 pal/none/embedmq_pal.c     → C11 atomic spinlock; no thread; use embedmq_poll()
 ```
 
@@ -133,12 +133,16 @@ embedmq/
 ├── pal/
 │   ├── embedmq_pal.h          ← PAL interface
 │   ├── linux/                 ← pthread implementation
-│   ├── freertos/              ← FreeRTOS (planned)
+│   ├── freertos/              ← FreeRTOS (counting sem + task)
 │   └── none/                  ← bare-metal spinlock + poll()
+├── sim/
+│   └── freertos/              ← FreeRTOS POSIX simulator test (FreeRTOSConfig.h, main.c, CMakeLists.txt)
 ├── examples/
 │   └── basic.c                ← minimal working example
 ├── tests/
 │   └── test_embedmq.c         ← 8 test cases incl. concurrent stress test
+├── docs/
+│   └── API.md / API_CN.md     ← full bilingual API reference
 ├── CMakeLists.txt
 ├── README.md                  ← English, published on GitHub
 ├── README_CN.md               ← Chinese
@@ -192,5 +196,8 @@ cmake .. -DEMBEDMQ_PAL=none && make
 - [x] CI (GitHub Actions — gcc + clang)
 - [x] Benchmark (3M msgs/sec throughput, ~38µs latency)
 - [x] C++ wrapper (lambda + RAII, header-only embedmq.hpp)
-- [ ] RTOS PAL (generic template + FreeRTOS/Zephyr 映射表)
+- [x] FreeRTOS PAL (counting sem + task; vTaskDelete/sem join handshake)
+- [x] FreeRTOS POSIX simulator test + CI job (sim/freertos/, no hardware)
+- [ ] Other RTOS backends (Zephyr / ThreadX / RT-Thread) — add one at a time, each verified
+- [ ] Verify on real hardware (currently simulator-only)
 - [ ] v2: multi-priority queue (urgent/normal，两个实例或内置优先级字段)

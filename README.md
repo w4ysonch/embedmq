@@ -265,8 +265,18 @@ Add `-Iinclude -Ipal` to your compiler flags.
 | PAL | File | Notes |
 |---|---|---|
 | Linux | `pal/linux/embedmq_pal.c` | pthreads + POSIX semaphore |
-| FreeRTOS | `pal/freertos/embedmq_pal.c` | planned |
+| FreeRTOS | `pal/freertos/embedmq_pal.c` | counting semaphore + task; tested on the FreeRTOS POSIX simulator (GCC_POSIX) |
 | Bare-metal | `pal/none/embedmq_pal.c` | C11 atomics spinlock; use `embedmq_poll()` |
+
+> The FreeRTOS PAL is verified on the FreeRTOS POSIX port (host simulator, no hardware) in CI —
+> see `sim/freertos/`. This validates the PAL logic (semaphore wakeup, mutex, task create/exit,
+> dispatch); it does not exercise real-hardware timing or ISR context. Build the simulator test with:
+>
+> ```bash
+> cmake -B build -DEMBEDMQ_BUILD_FREERTOS_SIM=ON   # fetches FreeRTOS-Kernel
+> cmake --build build
+> ./build/sim/freertos/test_embedmq_freertos
+> ```
 
 ---
 

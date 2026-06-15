@@ -36,3 +36,22 @@ jobs:
 
       - name: Test (C++ wrapper)
         run: ./build/test_embedmq_cpp
+
+  freertos-sim:
+    name: FreeRTOS PAL (POSIX simulator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake
+
+      - name: Configure (fetches FreeRTOS-Kernel)
+        run: cmake -B build-frt -DEMBEDMQ_BUILD_FREERTOS_SIM=ON
+
+      - name: Build
+        run: cmake --build build-frt --parallel
+
+      - name: Run simulator test
+        run: ./build-frt/sim/freertos/test_embedmq_freertos

@@ -40,7 +40,20 @@ typedef pthread_t       embedmq_pal_thread_t;
 
 typedef SemaphoreHandle_t embedmq_pal_sem_t;
 typedef SemaphoreHandle_t embedmq_pal_mutex_t;
-typedef TaskHandle_t      embedmq_pal_thread_t;
+
+/*
+ * FreeRTOS has no pthread_join, and a task function must never return
+ * (it must call vTaskDelete(NULL)). The thread handle therefore carries
+ * a "done" semaphore the task gives just before deleting itself, so that
+ * embedmq_pal_thread_join() can block until the task has actually exited.
+ * fn/arg are stashed here so the task trampoline needs no heap allocation.
+ */
+typedef struct {
+    TaskHandle_t      handle;
+    SemaphoreHandle_t done;
+    void            (*fn)(void *);
+    void             *arg;
+} embedmq_pal_thread_t;
 
 /* ---- No OS (polling / superloop) ----------------------- */
 #elif defined(EMBEDMQ_PAL_NONE)

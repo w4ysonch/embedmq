@@ -59,3 +59,13 @@ if(EMBEDMQ_BUILD_TESTS)
     target_link_libraries(test_embedmq_cpp PRIVATE embedmq)
     add_test(NAME embedmq_cpp_tests COMMAND test_embedmq_cpp)
 endif()
+
+# ---- FreeRTOS POSIX simulator test -------------------------------
+# Off by default: a normal Linux build never fetches the FreeRTOS kernel.
+# Enable with -DEMBEDMQ_BUILD_FREERTOS_SIM=ON to verify the FreeRTOS PAL
+# on a host machine (no hardware required).
+option(EMBEDMQ_BUILD_FREERTOS_SIM "Build FreeRTOS POSIX simulator test" OFF)
+if(EMBEDMQ_BUILD_FREERTOS_SIM)
+    set(EMBEDMQ_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+    add_subdirectory(sim/freertos)
+endif()

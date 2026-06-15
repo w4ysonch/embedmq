@@ -261,8 +261,18 @@ pal/linux/embedmq_pal.c      ← 或换成你的目标平台
 | PAL | 文件 | 说明 |
 |---|---|---|
 | Linux | `pal/linux/embedmq_pal.c` | pthreads + POSIX 信号量 |
-| FreeRTOS | `pal/freertos/embedmq_pal.c` | 计划中 |
+| FreeRTOS | `pal/freertos/embedmq_pal.c` | 计数信号量 + task；已在 FreeRTOS POSIX 模拟器（GCC_POSIX）验证 |
 | 裸机 | `pal/none/embedmq_pal.c` | C11 原子 spinlock，需调用 `embedmq_poll()` |
+
+> FreeRTOS PAL 在 CI 里用 FreeRTOS POSIX 端口（host 模拟器，无需硬件）验证 —— 见 `sim/freertos/`。
+> 这验证的是 PAL 逻辑（信号量唤醒、互斥、task 创建/退出、dispatch 流程），**不**覆盖真实硬件时序与
+> ISR 上下文。构建模拟器测试：
+>
+> ```bash
+> cmake -B build -DEMBEDMQ_BUILD_FREERTOS_SIM=ON   # 会拉取 FreeRTOS-Kernel
+> cmake --build build
+> ./build/sim/freertos/test_embedmq_freertos
+> ```
 
 ---
 
