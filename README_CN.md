@@ -108,6 +108,30 @@ void sensor_isr(void)
 }
 ```
 
+### C++ wrapper（lambda + RAII）
+
+```cpp
+#include "embedmq.hpp"
+
+embedmq::MQ q;
+
+// lambda 捕获局部变量，不需要全局函数
+int count = 0;
+q.subscribe("battery.changed", [&count](const void *data, size_t size) {
+    const auto *b = static_cast<const BatteryInfo *>(data);
+    printf("level=%d\n", b->level);
+    count++;
+});
+
+q.publish("battery.changed", &info, sizeof(info));
+
+// 热路径：缓存 UUID，直接用 ID 投递
+uint32_t uuid = embedmq::MQ::uuid("battery.changed");
+q.publish_id(uuid, &info, sizeof(info));
+
+// q 析构时自动调用 embedmq_destroy()，不会泄漏（RAII）
+```
+
 ### 热路径变体（跳过每次 post 的 hash 计算）
 
 ```c

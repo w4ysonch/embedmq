@@ -189,7 +189,7 @@ cmake .. -DEMBEDMQ_PAL=none && make
 - [x] Basic example
 - [x] Concurrent stress test (4 producers × 2000 msgs)
 - [x] README (EN + CN)
+- [x] CI (GitHub Actions — gcc + clang)
+- [x] Benchmark (3M msgs/sec throughput, ~38µs latency)
+- [x] C++ wrapper (lambda + RAII, header-only embedmq.hpp)
 - [ ] FreeRTOS PAL
-- [ ] C++ wrapper (lambda support)
-- [ ] Benchmark
-- [ ] CI (GitHub Actions)

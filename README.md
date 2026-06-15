@@ -108,6 +108,30 @@ void sensor_isr(void)
 }
 ```
 
+### C++ wrapper (lambda + RAII)
+
+```cpp
+#include "embedmq.hpp"
+
+embedmq::MQ q;
+
+// Lambda with capture — no global function needed
+int count = 0;
+q.subscribe("battery.changed", [&count](const void *data, size_t size) {
+    const auto *b = static_cast<const BatteryInfo *>(data);
+    printf("level=%d\n", b->level);
+    count++;
+});
+
+q.publish("battery.changed", &info, sizeof(info));
+
+// Hot path: cache UUID once, publish by ID
+uint32_t uuid = embedmq::MQ::uuid("battery.changed");
+q.publish_id(uuid, &info, sizeof(info));
+
+// q destructor calls embedmq_destroy() automatically (RAII)
+```
+
 ### Hot-path variant (skip hash on every post)
 
 ```c
