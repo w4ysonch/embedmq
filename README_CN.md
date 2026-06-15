@@ -20,11 +20,13 @@
 
 embedmq 把这一切收拢成 3 个函数——`create`、`register`、`post`。你决定**谁发什么**、**谁接什么**，库替你处理队列、互斥、信号量和 dispatch。
 
+- **Linux 多线程，不必引入 DBus** — 硬件监控线程、网络线程、配置线程——每个 `post` 自己的事件，`register` 自己关心的通知。一个头文件 + 一个 PAL 文件，链接 `-lpthread` 即用。零外部依赖，不用为线程间通信引入重型框架。
+
 - **FreeRTOS 多任务通信，不再手写 Queue** — 传感器任务只做一件事：`post("sensor.temp", &data, sizeof(data))`。UI 任务只做一件事：`register("sensor.temp", on_temp, NULL)`。两边互不感知对方的 TaskHandle 或队列句柄。
 
 - **裸机超级循环，不用堆砌 `if (flag)`** — 定时器 ISR post `"tick.10ms"`，按键 ISR post `"button.press"`，ADC 完成回调 post `"adc.done"`。主循环一行 `embedmq_poll(q)` 全部 dispatch，不再加一个 flag 就在 main 里加一个 if。
 
-- **RTOS 到裸机，同一套 API** — Linux 上用 pthread + POSIX 信号量，FreeRTOS 上用计数信号量 + Task，裸机上用 C11 原子锁 + poll()。换平台只换一个 PAL 文件，核心代码、公开头文件、调用方式完全不变。
+- **一套 API，三个平台** — Linux 上用 pthread + POSIX 信号量，FreeRTOS 上用计数信号量 + Task，裸机上用 C11 原子锁 + poll()。换平台只换一个 PAL 文件，核心代码、公开头文件、调用方式完全不变。
 
 - **注册时 hash 一次，运行时零字符串** — name 注册时被 FNV-1a hash 成 `uint32_t` UUID 并插入排序数组，dispatch 做二分查找整数比较。缓存 UUID 后在紧循环里用 `post_id()` 投递——整个热路径没有字符串操作，一次信号量操作，一次 memcpy 入队。
 

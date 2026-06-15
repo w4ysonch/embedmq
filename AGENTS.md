@@ -103,4 +103,3 @@ PAL design rationale (and why it's a PAL, not a HAL) is in [docs/DESIGN.md](docs
 - [ ] Other RTOS backends (Zephyr / ThreadX / RT-Thread) — add one at a time, each verified
 - [ ] Verify on real hardware (currently simulator-only)
 - [ ] v2: multi-priority queue (urgent/normal — two instances or a priority field)
-```

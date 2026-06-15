@@ -20,6 +20,8 @@ In embedded systems, threads need to notify each other constantly: a sensor read
 
 embedmq collapses all of this into 3 functions — `create`, `register`, `post`. You decide **who posts what** and **who handles what**. The library handles the queue, the mutex, the semaphore, and the dispatch.
 
+- **Linux threads, no need for DBus** — Hardware monitor thread, network thread, config thread — each posts its own events, registers for the ones it cares about. One header + one PAL file, link `-lpthread`. Zero external deps, no heavy framework just for thread comms.
+
 - **FreeRTOS tasks, no more hand-rolled Queues** — Your sensor task does one thing: `post("sensor.temp", &data, sizeof(data))`. Your UI task does one thing: `register("sensor.temp", on_temp, NULL)`. Neither knows the other's TaskHandle or queue handle.
 
 - **Bare-metal superloops, no more `if (flag)` sprawl** — Timer ISR posts `"tick.10ms"`, button ISR posts `"button.press"`, ADC callback posts `"adc.done"`. Your main loop calls `embedmq_poll(q)` once to dispatch everything. No new flag → no new if-block in main.
