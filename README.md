@@ -229,6 +229,8 @@ cmake .. -DCMAKE_BUILD_TYPE=Release && make
 
 ## Building
 
+> Full build guide — all CMake options, recipes, and no-CMake integration: **[docs/BUILD.md](docs/BUILD.md)**
+
 ```bash
 # Linux (default)
 mkdir build && cd build

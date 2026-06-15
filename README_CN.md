@@ -229,6 +229,8 @@ cmake .. -DCMAKE_BUILD_TYPE=Release && make
 
 ## 构建
 
+> 完整构建指南 —— 全部 CMake 选项、配方、不用 CMake 的集成方式：**[docs/BUILD_CN.md](docs/BUILD_CN.md)**
+
 ```bash
 # Linux（默认）
 mkdir build && cd build
