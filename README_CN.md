@@ -180,6 +180,27 @@ typedef void (*embedmq_handler_fn)(const void *data, size_t size, void *ctx);
 
 ---
 
+## 性能数据
+
+在 x86-64 Linux 上测量（Release 构建，单生产者 + 消费线程）：
+
+| 测试项 | 结果 |
+|---|---|
+| `embedmq_post()` 吞吐量 | **300 万条/秒** |
+| `embedmq_post_id()` 吞吐量（UUID 已缓存） | **300 万条/秒** |
+| 端到端平均延迟（post → handler） | **~38 µs** |
+| 端到端最小延迟 | **~7 µs** |
+| `embedmq_uuid()` hash 速度 | **4500 万次/秒**（~22 ns/次） |
+
+在自己机器上跑：
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make
+./benchmark
+```
+
+---
+
 ## 构建
 
 ```bash

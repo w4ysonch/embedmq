@@ -36,6 +36,9 @@ option(EMBEDMQ_BUILD_EXAMPLES "Build examples" ON)
 if(EMBEDMQ_BUILD_EXAMPLES)
     add_executable(example_basic examples/basic.c)
     target_link_libraries(example_basic PRIVATE embedmq)
+
+    add_executable(benchmark examples/benchmark.c)
+    target_link_libraries(benchmark PRIVATE embedmq pthread)
 endif()
 
 # ---- Tests -------------------------------------------------------

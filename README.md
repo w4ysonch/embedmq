@@ -180,6 +180,27 @@ typedef void (*embedmq_handler_fn)(const void *data, size_t size, void *ctx);
 
 ---
 
+## Performance
+
+Measured on x86-64 Linux (Release build, single producer + consumer thread):
+
+| Benchmark | Result |
+|---|---|
+| `embedmq_post()` throughput | **3.0M msgs/sec** |
+| `embedmq_post_id()` throughput (UUID cached) | **3.0M msgs/sec** |
+| End-to-end latency avg (post → handler) | **~38 µs** |
+| End-to-end latency min | **~7 µs** |
+| `embedmq_uuid()` hash speed | **45M hashes/sec** (~22 ns/hash) |
+
+Run on your own hardware:
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make
+./benchmark
+```
+
+---
+
 ## Building
 
 ```bash
