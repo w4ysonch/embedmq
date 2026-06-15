@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
-project(embedmq C)
+project(embedmq C CXX)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -39,6 +42,9 @@ if(EMBEDMQ_BUILD_EXAMPLES)
 
     add_executable(benchmark examples/benchmark.c)
     target_link_libraries(benchmark PRIVATE embedmq pthread)
+
+    add_executable(example_basic_cpp examples/basic_cpp.cpp)
+    target_link_libraries(example_basic_cpp PRIVATE embedmq)
 endif()
 
 # ---- Tests -------------------------------------------------------
@@ -48,4 +54,8 @@ if(EMBEDMQ_BUILD_TESTS)
     add_executable(test_embedmq tests/test_embedmq.c)
     target_link_libraries(test_embedmq PRIVATE embedmq)
     add_test(NAME embedmq_tests COMMAND test_embedmq)
+
+    add_executable(test_embedmq_cpp tests/test_embedmq_cpp.cpp)
+    target_link_libraries(test_embedmq_cpp PRIVATE embedmq)
+    add_test(NAME embedmq_cpp_tests COMMAND test_embedmq_cpp)
 endif()

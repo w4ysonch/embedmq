@@ -4,3 +4,5 @@ build/
 *.so
 .DS_Store
 .history
+compile_commands.json
+.cache/

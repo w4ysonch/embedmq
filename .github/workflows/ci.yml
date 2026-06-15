@@ -31,5 +31,8 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
-      - name: Test
+      - name: Test (C)
         run: ./build/test_embedmq
+
+      - name: Test (C++ wrapper)
+        run: ./build/test_embedmq_cpp
