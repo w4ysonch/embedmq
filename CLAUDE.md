@@ -192,4 +192,5 @@ cmake .. -DEMBEDMQ_PAL=none && make
 - [x] CI (GitHub Actions — gcc + clang)
 - [x] Benchmark (3M msgs/sec throughput, ~38µs latency)
 - [x] C++ wrapper (lambda + RAII, header-only embedmq.hpp)
-- [ ] FreeRTOS PAL
+- [ ] RTOS PAL (generic template + FreeRTOS/Zephyr 映射表)
+- [ ] v2: multi-priority queue (urgent/normal，两个实例或内置优先级字段)

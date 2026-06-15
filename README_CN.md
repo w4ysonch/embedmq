@@ -202,6 +202,8 @@ typedef void (*embedmq_handler_fn)(const void *data, size_t size, void *ctx);
 | `max_handlers` | 64 | 最大注册事件名数量 |
 | `thread_priority` | 0 | 消费线程优先级（0 = 系统默认） |
 
+> 每个函数的完整参考（参数、返回值、线程规则）：**[docs/API_CN.md](docs/API_CN.md)**
+
 ---
 
 ## 性能数据

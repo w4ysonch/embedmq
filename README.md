@@ -202,6 +202,8 @@ typedef void (*embedmq_handler_fn)(const void *data, size_t size, void *ctx);
 | `max_handlers` | 64 | Max registered event names |
 | `thread_priority` | 0 | Consumer thread priority (0 = OS default) |
 
+> Full per-function reference (parameters, return values, threading rules): **[docs/API.md](docs/API.md)**
+
 ---
 
 ## Performance
