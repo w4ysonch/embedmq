@@ -2,6 +2,8 @@
 
 **[English ->](README.md)**
 
+![CI](https://github.com/w4ysonch/embedmq/actions/workflows/ci.yml/badge.svg)
+
 零依赖的嵌入式消息分发库，支持 Linux、RTOS 和裸机。
 
 **3 个核心函数。静态模式零堆分配。UUID dispatch — 运行时零字符串操作。**

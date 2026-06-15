@@ -3,3 +3,4 @@ build/
 *.a
 *.so
 .DS_Store
+.history

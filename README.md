@@ -2,6 +2,8 @@
 
 **[中文 ->](README_CN.md)**
 
+![CI](https://github.com/w4ysonch/embedmq/actions/workflows/ci.yml/badge.svg)
+
 Lightweight, zero-dependency message dispatch library for embedded Linux and RTOS.
 
 **3 core functions. Zero heap in static mode. UUID dispatch — no string comparison at runtime.**
