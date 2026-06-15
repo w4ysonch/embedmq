@@ -48,6 +48,8 @@ embedmq_post(q, name, data, n)    sem_wait()  ← sleeps when queue is empty
 - **Ring buffer**: lock-free read (single consumer), mutex-protected write (multiple producers). Messages may wrap around the buffer end transparently.
 - **Semaphore**: consumer sleeps when the queue is empty; each `post()` wakes it once.
 
+> The reasoning behind these choices — and the FreeRTOS porting war story — is in **[docs/DESIGN.md](docs/DESIGN.md)**.
+
 ---
 
 ## Quick start

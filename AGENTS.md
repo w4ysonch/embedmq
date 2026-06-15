@@ -1,203 +1,106 @@
-# embedmq — Lightweight Message Dispatch Library for Embedded Linux & RTOS
+# AGENTS.md
+
+This file provides guidance to AI coding agents (Claude Code, Cursor, etc.) when
+working with code in this repository. The docs below are the **single source of
+truth** — read and update them rather than duplicating their content here.
 
 ## Project Overview
 
-**embedmq** is a zero-dependency C message dispatch library designed for embedded Linux and RTOS. Core mechanism: UUID dispatch + ring buffer + semaphore wakeup for asynchronous inter-thread communication.
-
-**Author**: chenhuisheng1 (w4ysonch)
-**Language**: C (C11), optional C++ wrapper planned
-**License**: MIT
+**embedmq** is a zero-dependency C11 library (with a header-only C++ wrapper) for
+**intra-process, thread-to-thread** message dispatch. Mechanism: UUID dispatch +
+ring buffer + semaphore wakeup. MIT-licensed.
 
 ---
 
-## Problem Statement
+## Documentation map
 
-Embedded Linux / RTOS projects need inter-thread message passing, but existing solutions are either too heavy (DBus requires daemon + glib) or too primitive (hand-rolled queues lack thread safety and unified dispatch).
-
-| | embedmq | DBus | ZeroMQ | hand-rolled |
-|---|---|---|---|---|
-| Dependencies | none | daemon + glib | libzmq | none |
-| Platform | Linux / RTOS / bare-metal | Linux only | all | all |
-| Zero heap | ✅ static mode | ❌ | ❌ | manual |
-| API surface | 4 functions | very complex | medium | — |
-| UUID dispatch | ✅ integer compare | ❌ string | ❌ | — |
+| Doc | Covers |
+|---|---|
+| [README.md](README.md) / [README_CN.md](README_CN.md) | What it is, quick start, feature overview |
+| [docs/API.md](docs/API.md) / [API_CN.md](docs/API_CN.md) | Full per-function API reference, lifecycle & threading rules |
+| [docs/BUILD.md](docs/BUILD.md) / [BUILD_CN.md](docs/BUILD_CN.md) | All CMake options, build recipes, no-CMake integration |
+| [docs/DESIGN.md](docs/DESIGN.md) / [DESIGN_CN.md](docs/DESIGN_CN.md) | Design decisions & trade-offs, architecture, FreeRTOS porting notes |
 
 ---
 
-## Core Design
+## Architecture in one paragraph
 
-Three components:
-
-### 1. Registry
-`name` is hashed to a `uint32_t` UUID at registration time. Runtime dispatch compares integers only — no string matching on the hot path.
-
-```c
-embedmq_register(q, "battery.changed", on_battery_changed, user_data);
-```
-
-### 2. Ring Queue
-Circular buffer with mutex-protected writes (multi-producer safe) and lock-free reads (single consumer). Supports two allocation modes:
-- **Dynamic mode**: internal malloc
-- **Static mode**: caller provides buffer (zero malloc, suitable for bare-metal)
-
-Wire format per message:
-```
-[ uint32_t uuid ][ uint16_t length ][ payload bytes ]
-```
-Messages may wrap around the buffer end; handled transparently.
-
-### 3. Dispatcher
-An internal consumer thread runs `while(1)`, blocking on a semaphore. When woken, it drains the queue and dispatches each message by UUID binary search → handler call.
-
-```
-Producer thread(s):
-  embedmq_post(q, "battery.changed", &info, sizeof(info))
-    → hash name → uuid
-    → mutex_lock → ring_write(uuid|len|payload) → mutex_unlock
-    → semaphore_give()  — wakes consumer
-
-Consumer thread (internal):
-  semaphore_wait()  ← sleeps here when queue is empty
-    → ring_read() → uuid + payload
-    → binary_search(uuid) → handler
-    → handler(data, size, user_data)
-```
+`register` hashes a name → `uint32_t` UUID once and stores `{uuid, fn, ctx}` in a
+table sorted by UUID. `post` serializes `[uuid|len|payload]` into a ring buffer
+under a mutex, then gives a semaphore. An internal consumer thread wakes,
+binary-searches the UUID, and calls the handler. Runtime dispatch compares
+integers only. Full reasoning, diagram, and wire format: [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
-## API
-
-```c
-// Create dispatcher (starts consumer thread internally)
-embedmq_t *embedmq_create(const embedmq_config_t *cfg);
-
-// Static / zero-malloc mode — caller provides memory
-embedmq_t *embedmq_create_static(void *mem, size_t mem_size,
-                                  const embedmq_config_t *cfg);
-
-// Compute required buffer size for static mode
-size_t embedmq_mem_size(const embedmq_config_t *cfg);
-
-// Register a handler (call before producers start)
-int embedmq_register(embedmq_t *q, const char *name,
-                     embedmq_handler_fn fn, void *ctx);
-
-// Post an event (non-blocking, thread-safe)
-int embedmq_post(embedmq_t *q, const char *name,
-                 const void *data, size_t size);
-
-// Post by UUID — hot-path variant, skips hash
-int embedmq_post_id(embedmq_t *q, uint32_t uuid,
-                    const void *data, size_t size);
-
-// Compute UUID for a name (stateless pure hash)
-uint32_t embedmq_uuid(const char *name);
-
-// Drive dispatch manually — for no-OS / superloop mode
-int embedmq_poll(embedmq_t *q);
-
-// Destroy (waits for consumer thread to exit)
-void embedmq_destroy(embedmq_t *q);
-```
-
-Handler signature:
-```c
-typedef void (*embedmq_handler_fn)(const void *data, size_t size, void *ctx);
-```
-
----
-
-## Platform Abstraction Layer (PAL)
-
-All OS primitives go through the PAL to support Linux, FreeRTOS, and bare-metal:
-
-```
-pal/linux/embedmq_pal.c    → pthread_mutex, sem_t, pthread_create
-pal/freertos/embedmq_pal.c → xSemaphoreCreateCounting/Mutex, xTaskCreate + vTaskDelete join
-pal/none/embedmq_pal.c     → C11 atomic spinlock; no thread; use embedmq_poll()
-```
-
----
-
-## Directory Structure
+## Directory structure
 
 ```
 embedmq/
 ├── include/
-│   └── embedmq.h              ← public API
+│   ├── embedmq.h              ← public C API (keep free of internal types)
+│   └── embedmq.hpp            ← header-only C++ wrapper (lambdas + RAII)
 ├── src/
 │   ├── embedmq.c              ← core: create/register/post/destroy/poll
 │   ├── embedmq_internal.h     ← internal structs and declarations
 │   ├── embedmq_queue.c        ← ring buffer (wrap-safe read/write)
 │   └── embedmq_hash.c         ← FNV-1a hash → uint32_t UUID
 ├── pal/
-│   ├── embedmq_pal.h          ← PAL interface
-│   ├── linux/                 ← pthread implementation
+│   ├── embedmq_pal.h          ← PAL interface (8 functions)
+│   ├── linux/                 ← pthread + POSIX semaphore
 │   ├── freertos/              ← FreeRTOS (counting sem + task)
 │   └── none/                  ← bare-metal spinlock + poll()
 ├── sim/
 │   └── freertos/              ← FreeRTOS POSIX simulator test (FreeRTOSConfig.h, main.c, CMakeLists.txt)
-├── examples/
-│   └── basic.c                ← minimal working example
-├── tests/
-│   └── test_embedmq.c         ← 8 test cases incl. concurrent stress test
-├── docs/
-│   └── API.md / API_CN.md     ← full bilingual API reference
+├── examples/                  ← basic.c, basic_cpp.cpp, benchmark.c
+├── tests/                     ← test_embedmq.c, test_embedmq_cpp.cpp
+├── docs/                      ← API / BUILD / DESIGN (each EN + CN)
 ├── CMakeLists.txt
-├── README.md                  ← English, published on GitHub
-├── README_CN.md               ← Chinese
-└── AGENTS.md                   ← project context for AI agents (CLAUDE.md symlinks here)
+├── README.md / README_CN.md
+└── AGENTS.md                  ← this file (CLAUDE.md symlinks here)
 ```
 
 ---
 
-## Key Design Decisions
+## PAL backends
 
-**Why UUID instead of string dispatch?**
-Hash once at registration, compare integers at runtime. Zero string operations on the hot path — every cycle matters on embedded devices.
+Selected at compile time with `-DEMBEDMQ_PAL=<name>`:
 
-**Why support zero malloc?**
-Embedded devices (MCU and memory-constrained Linux) need to avoid heap fragmentation and non-deterministic latency. Static mode lets the caller provide a fixed-size buffer with fully controlled lifetime.
+| Name | Backend |
+|---|---|
+| `linux` (default) | pthread mutex + POSIX semaphore + pthread |
+| `freertos` | `xSemaphoreCreateCounting/Mutex` + `xTaskCreate` (+ `vTaskDelete`/sem join) |
+| `none` | C11 atomics spinlock; no thread — driven by `embedmq_poll()` |
 
-**Why semaphore instead of busy-wait?**
-Busy-wait wastes CPU. The consumer thread blocks on the semaphore and only wakes when a producer signals — same pattern as FreeRTOS queues.
-
-**Why not POSIX mqueue (mq_open)?**
-POSIX mqueue is for inter-process communication with kernel overhead and fixed capacity at creation time. embedmq is intra-process, lighter, and runtime-configurable.
+PAL design rationale (and why it's a PAL, not a HAL) is in [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
-## Build & Test
+## Working in this repo (conventions)
 
-```bash
-# Linux
-mkdir build && cd build
-cmake .. && make
-
-# Run tests
-./test_embedmq
-
-# No-OS / bare-metal PAL
-cmake .. -DEMBEDMQ_PAL=none && make
-```
+- **Docs are bilingual.** Every change to an `*.md` must be mirrored in its
+  `*_CN.md` counterpart (and vice versa). Each pair has language-switch links at
+  the top.
+- **Core stays PAL-agnostic.** Code in `src/` must only use the interface in
+  `pal/embedmq_pal.h` — never call a platform primitive directly.
+- **Public header stays clean.** `include/embedmq.h` must not expose internal
+  types; internals live in `src/embedmq_internal.h`.
+- **Honest platform claims.** FreeRTOS is verified on the POSIX simulator only —
+  do not claim real-hardware support until it runs on a board.
 
 ---
 
-## Progress
+## Roadmap / progress
 
-- [x] Ring buffer (static + dynamic)
-- [x] UUID hash registry
-- [x] Linux PAL (pthreads)
-- [x] Bare-metal PAL (C11 atomics + poll())
-- [x] Core API (create / register / post / post_id / poll / destroy)
-- [x] Basic example
-- [x] Concurrent stress test (4 producers × 2000 msgs)
-- [x] README (EN + CN)
-- [x] CI (GitHub Actions — gcc + clang)
-- [x] Benchmark (3M msgs/sec throughput, ~38µs latency)
-- [x] C++ wrapper (lambda + RAII, header-only embedmq.hpp)
-- [x] FreeRTOS PAL (counting sem + task; vTaskDelete/sem join handshake)
-- [x] FreeRTOS POSIX simulator test + CI job (sim/freertos/, no hardware)
+- [x] Core (ring buffer static+dynamic, UUID registry, dispatch API)
+- [x] Linux PAL · bare-metal PAL · FreeRTOS PAL
+- [x] C++ wrapper (header-only, lambda + RAII)
+- [x] Tests (C, C++) + concurrent stress test
+- [x] CI (gcc + clang) + FreeRTOS POSIX simulator job
+- [x] Benchmark (~3M msgs/sec, ~38µs latency)
+- [x] Docs: README / API / BUILD / DESIGN (all EN + CN)
+- [x] Release v0.1.0
 - [ ] Other RTOS backends (Zephyr / ThreadX / RT-Thread) — add one at a time, each verified
 - [ ] Verify on real hardware (currently simulator-only)
-- [ ] v2: multi-priority queue (urgent/normal，两个实例或内置优先级字段)
+- [ ] v2: multi-priority queue (urgent/normal — two instances or a priority field)
+```

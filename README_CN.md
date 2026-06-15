@@ -48,6 +48,8 @@ embedmq_post(q, name, data, n)      sem_wait()  ← 队列空时睡眠
 - **环形缓冲**：单消费者无锁读，多生产者 mutex 保护写。消息可跨缓冲区末尾 wrap，透明处理。
 - **信号量**：队列空时消费者睡眠；每次 `post()` 唤醒一次，不空转。
 
+> 这些选择背后的取舍——以及 FreeRTOS 移植踩坑实录——都在 **[docs/DESIGN_CN.md](docs/DESIGN_CN.md)**。
+
 ---
 
 ## 快速开始
