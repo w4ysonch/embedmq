@@ -99,8 +99,8 @@ void app_init(void)
     embedmq_register(q, "sensor.update", on_sensor, NULL);
 }
 
-/* 任意任务或 ISR 安全上下文均可调用 */
-void sensor_isr(void)
+/* 线程安全，可从任意任务调用 */
+void sensor_task(void)
 {
     sensor_data_t d = read_sensor();
     embedmq_post(q, "sensor.update", &d, sizeof(d));

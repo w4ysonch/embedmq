@@ -99,8 +99,8 @@ void app_init(void)
     embedmq_register(q, "sensor.update", on_sensor, NULL);
 }
 
-/* Safe to call from any task or ISR context */
-void sensor_isr(void)
+/* Thread-safe: call from any task */
+void sensor_task(void)
 {
     sensor_data_t d = read_sensor();
     embedmq_post(q, "sensor.update", &d, sizeof(d));
