@@ -1,3 +1,25 @@
+/*
+ * basic.c — minimal embedmq example (C API)
+ *
+ * Demonstrates the three-step pattern:
+ *   1. embedmq_create()   — start the dispatcher
+ *   2. embedmq_register() — bind a name to a handler function
+ *   3. embedmq_post()     — send a message from any thread
+ *
+ * Also shows the hot-path variant: cache the UUID once with
+ * embedmq_uuid() and call embedmq_post_id() to skip the hash
+ * on every post.
+ *
+ * Expected output:
+ *   [handler] battery: level=85% voltage=4.05V
+ *   [handler] battery: level=20% voltage=3.55V
+ *   [handler] battery: level=5% voltage=3.20V
+ *   done
+ *
+ * Build (from repo root):
+ *   cmake -B build && cmake --build build && ./build/example_basic
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include "embedmq.h"

@@ -1,3 +1,21 @@
+/*
+ * basic_cpp.cpp — minimal embedmq example (C++ wrapper)
+ *
+ * Demonstrates the C++ wrapper (embedmq.hpp):
+ *   - embedmq::MQ        RAII wrapper; destructor calls embedmq_destroy()
+ *   - subscribe()        register a lambda (with capture) as a handler
+ *   - publish()          send a message by name
+ *   - publish_id()       hot-path variant with a cached UUID
+ *
+ * Expected output:
+ *   [handler] battery: level=85% voltage=4.05V
+ *   [handler] battery: level=20% voltage=3.55V
+ *   received 2 messages
+ *
+ * Build (from repo root):
+ *   cmake -B build && cmake --build build && ./build/example_basic_cpp
+ */
+
 #include <cstdio>
 #include <unistd.h>
 #include "embedmq.hpp"

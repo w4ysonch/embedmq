@@ -1,3 +1,16 @@
+/*
+ * benchmark.c — embedmq performance benchmark
+ *
+ * Runs four measurements and prints the results:
+ *   1. embedmq_post() throughput   — 500k messages, includes name→UUID hash
+ *   2. embedmq_post_id() throughput — 500k messages, UUID pre-cached (hot path)
+ *   3. End-to-end latency          — 10k messages, measures post→handler delay
+ *   4. embedmq_uuid() hash speed   — 5M hashes, measures raw FNV-1a speed
+ *
+ * Build (from repo root):
+ *   cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build && ./build/benchmark
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
