@@ -21,7 +21,6 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include "embedmq.h"
 
 typedef struct {
@@ -63,8 +62,6 @@ int main(void)
     embedmq_post_id(q, uuid, &info, sizeof(info));
 
     /* Give consumer thread time to drain the queue */
-    usleep(10000);
-
     embedmq_destroy(q);
     printf("done\n");
     return 0;
