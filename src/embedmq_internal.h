@@ -1,6 +1,7 @@
 #ifndef EMBEDMQ_INTERNAL_H
 #define EMBEDMQ_INTERNAL_H
 
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -45,8 +46,8 @@ struct embedmq_s {
     size_t   max_msg_size;
 
     /* Lifecycle */
-    volatile int running;
-    int          is_static; /* 0 = malloc'd, 1 = static mem */
+    atomic_int running;
+    int        is_static; /* 0 = malloc'd, 1 = static mem */
 };
 
 /* ---------------------------------------------------------

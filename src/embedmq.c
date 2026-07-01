@@ -77,8 +77,11 @@ static void consumer_thread(void *arg)
 
     while (1) {
         embedmq_pal_sem_take(&q->sem);
-        if (!q->running)
+        if (!atomic_load(&q->running)) {
+            while (dispatch_one(q))
+                ;
             break;
+        }
         dispatch_one(q);
     }
 }
@@ -95,7 +98,7 @@ static int init_handle(embedmq_t *q, const embedmq_config_t *cfg)
     q->max_msg_size  = cfg->max_msg_size;
     q->head          = 0;
     q->tail          = 0;
-    q->running       = 1;
+    atomic_store(&q->running, 1);
 
     if (embedmq_pal_sem_create(&q->sem) != 0)
         return -1;
@@ -271,7 +274,7 @@ void embedmq_destroy(embedmq_t *q)
     if (!q) return;
 
     /* Signal consumer to exit */
-    q->running = 0;
+    atomic_store(&q->running, 0);
     embedmq_pal_sem_give(&q->sem);
 
     embedmq_pal_thread_join(&q->thread);
