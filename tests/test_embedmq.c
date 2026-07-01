@@ -62,10 +62,8 @@ static void test_register_and_post(void)
     embedmq_post(q, "evt.a", NULL, 0);
     embedmq_post(q, "evt.a", NULL, 0);
 
-    usleep(20000);
-    assert(g_count == 3);
-
     embedmq_destroy(q);
+    assert(g_count == 3);
     printf("  [PASS] test_register_and_post\n");
 }
 
@@ -80,10 +78,8 @@ static void test_payload_received(void)
     int_msg_t m = { .value = 42 };
     embedmq_post(q, "int.msg", &m, sizeof(m));
 
-    usleep(20000);
-    assert(g_last_value == 42);
-
     embedmq_destroy(q);
+    assert(g_last_value == 42);
     printf("  [PASS] test_payload_received\n");
 }
 
@@ -99,10 +95,8 @@ static void test_post_id_hot_path(void)
     for (int i = 0; i < 10; i++)
         embedmq_post_id(q, uuid, NULL, 0);
 
-    usleep(20000);
-    assert(g_count == 10);
-
     embedmq_destroy(q);
+    assert(g_count == 10);
     printf("  [PASS] test_post_id_hot_path\n");
 }
 
@@ -126,10 +120,8 @@ static void test_static_mode(void)
     embedmq_post(q, "static.evt", NULL, 0);
     embedmq_post(q, "static.evt", NULL, 0);
 
-    usleep(20000);
-    assert(g_count == 2);
-
     embedmq_destroy(q);
+    assert(g_count == 2);
     printf("  [PASS] test_static_mode\n");
 }
 
@@ -204,13 +196,9 @@ static void test_concurrent_producers(void)
     for (int i = 0; i < STRESS_PRODUCERS; i++)
         pthread_join(threads[i], NULL);
 
-    /* Give consumer thread time to drain the remaining queue */
-    usleep(100000);
-
     int expected = STRESS_PRODUCERS * STRESS_MSGS_EACH;
+    embedmq_destroy(q);  /* blocks until consumer has drained the queue */
     assert(g_count == expected);
-
-    embedmq_destroy(q);
     printf("  [PASS] test_concurrent_producers (%d msgs from %d threads)\n",
            expected, STRESS_PRODUCERS);
 }
