@@ -151,6 +151,48 @@ static void test_queue_full(void)
     printf("  [PASS] test_queue_full\n");
 }
 
+static void test_handler_table_full(void)
+{
+    embedmq_config_t cfg = {
+        .queue_size   = 256,
+        .max_msg_size = 64,
+        .max_handlers = 2,
+    };
+    size_t needed = embedmq_mem_size(&cfg);
+    static uint8_t buf[512];
+    embedmq_t *q = embedmq_create_static(buf, needed, &cfg);
+    assert(q);
+
+    assert(embedmq_register(q, "evt.1", handler_count, NULL) == EMBEDMQ_OK);
+    assert(embedmq_register(q, "evt.2", handler_count, NULL) == EMBEDMQ_OK);
+    assert(embedmq_register(q, "evt.3", handler_count, NULL) == EMBEDMQ_ERR);
+
+    embedmq_destroy(q);
+    printf("  [PASS] test_handler_table_full\n");
+}
+
+static void test_post_exceeds_max_msg_size(void)
+{
+    embedmq_config_t cfg = {
+        .queue_size   = 256,
+        .max_msg_size = 8,
+        .max_handlers = 4,
+    };
+    size_t needed = embedmq_mem_size(&cfg);
+    static uint8_t buf[512];
+    embedmq_t *q = embedmq_create_static(buf, needed, &cfg);
+    assert(q);
+
+    embedmq_register(q, "evt.a", handler_count, NULL);
+
+    uint8_t big[16] = {0};
+    assert(embedmq_post(q, "evt.a", big, sizeof(big)) == EMBEDMQ_INVAL);
+    assert(embedmq_post(q, "evt.a", big, 8)           == EMBEDMQ_OK);
+
+    embedmq_destroy(q);
+    printf("  [PASS] test_post_exceeds_max_msg_size\n");
+}
+
 /* ---- concurrent stress test ------------------------------------ */
 
 #include <pthread.h>
@@ -215,6 +257,8 @@ int main(void)
     test_post_id_hot_path();
     test_static_mode();
     test_queue_full();
+    test_handler_table_full();
+    test_post_exceeds_max_msg_size();
     test_concurrent_producers();
     printf("All tests passed.\n");
     return 0;
