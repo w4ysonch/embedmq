@@ -46,6 +46,8 @@ ctest --test-dir build      # 跑全部测试
 | `EMBEDMQ_BUILD_EXAMPLES` | `ON` / `OFF` | `ON` | 是否编译示例（basic、benchmark、basic_cpp）。 |
 | `EMBEDMQ_BUILD_TESTS` | `ON` / `OFF` | `ON` | 是否编译测试可执行文件。 |
 | `EMBEDMQ_BUILD_FREERTOS_SIM` | `ON` / `OFF` | `OFF` | 拉取 FreeRTOS-Kernel 并编译 POSIX 模拟器测试。 |
+| `EMBEDMQ_ENABLE_TSAN` | `ON` / `OFF` | `OFF` | 启用 ThreadSanitizer（需 GCC/Clang 11+），检测数据竞争。与 ASan 互斥。 |
+| `EMBEDMQ_ENABLE_ASAN` | `ON` / `OFF` | `OFF` | 启用 AddressSanitizer，检测内存错误。与 TSan 互斥。 |
 | `CMAKE_BUILD_TYPE` | `Debug` / `Release` / … | 空 | 标准 CMake 选项。跑 benchmark 用 `Release`。 |
 | `CMAKE_C_COMPILER` | `gcc` / `clang` / … | 系统默认 | 选 C 编译器。 |
 

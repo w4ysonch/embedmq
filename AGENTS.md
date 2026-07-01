@@ -96,7 +96,7 @@ PAL design rationale (and why it's a PAL, not a HAL) is in [docs/DESIGN.md](docs
 - [x] Linux PAL · bare-metal PAL · FreeRTOS PAL
 - [x] C++ wrapper (header-only, lambda + RAII)
 - [x] Tests (C, C++) + concurrent stress test
-- [x] CI (gcc + clang) + FreeRTOS POSIX simulator job
+- [x] CI (gcc + clang + TSan) + FreeRTOS POSIX simulator job
 - [x] Benchmark (~3M msgs/sec, ~38µs latency)
 - [x] Docs: README / API / BUILD / DESIGN (all EN + CN)
 - [x] Release v0.1.0

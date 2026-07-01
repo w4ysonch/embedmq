@@ -47,6 +47,8 @@ Pass each as `-D<option>=<value>` at configure time.
 | `EMBEDMQ_BUILD_EXAMPLES` | `ON` / `OFF` | `ON` | Build the examples (basic, benchmark, basic_cpp). |
 | `EMBEDMQ_BUILD_TESTS` | `ON` / `OFF` | `ON` | Build the test executables. |
 | `EMBEDMQ_BUILD_FREERTOS_SIM` | `ON` / `OFF` | `OFF` | Fetch FreeRTOS-Kernel and build the POSIX simulator test. |
+| `EMBEDMQ_ENABLE_TSAN` | `ON` / `OFF` | `OFF` | Build with ThreadSanitizer (GCC/Clang 11+). Detects data races. Mutually exclusive with ASan. |
+| `EMBEDMQ_ENABLE_ASAN` | `ON` / `OFF` | `OFF` | Build with AddressSanitizer. Detects memory errors. Mutually exclusive with TSan. |
 | `CMAKE_BUILD_TYPE` | `Debug` / `Release` / … | (empty) | Standard CMake. Use `Release` for benchmarks. |
 | `CMAKE_C_COMPILER` | `gcc` / `clang` / … | system default | Pick the C compiler. |
 
