@@ -11,6 +11,24 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Default to Linux. Override with -DEMBEDMQ_PAL=freertos or =none
 set(EMBEDMQ_PAL "linux" CACHE STRING "PAL backend: linux | freertos | none")
 
+# ---- Sanitizers --------------------------------------------------
+option(EMBEDMQ_ENABLE_ASAN "Build with AddressSanitizer"  OFF)
+option(EMBEDMQ_ENABLE_TSAN "Build with ThreadSanitizer"   OFF)
+
+if(EMBEDMQ_ENABLE_ASAN AND EMBEDMQ_ENABLE_TSAN)
+    message(FATAL_ERROR "ASan and TSan cannot be enabled at the same time")
+endif()
+
+if(EMBEDMQ_ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+endif()
+
+if(EMBEDMQ_ENABLE_TSAN)
+    add_compile_options(-fsanitize=thread)
+    add_link_options(-fsanitize=thread)
+endif()
+
 # ---- Library target ----------------------------------------------
 add_library(embedmq STATIC
     src/embedmq.c

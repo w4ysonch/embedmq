@@ -37,6 +37,31 @@ jobs:
       - name: Test (C++ wrapper)
         run: ./build/test_embedmq_cpp
 
+  tsan:
+    name: ThreadSanitizer
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake
+
+      - name: Configure
+        run: |
+          cmake -B build-tsan \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DEMBEDMQ_ENABLE_TSAN=ON
+
+      - name: Build
+        run: cmake --build build-tsan --parallel
+
+      - name: Test (C)
+        run: ./build-tsan/test_embedmq
+
+      - name: Test (C++ wrapper)
+        run: ./build-tsan/test_embedmq_cpp
+
   freertos-sim:
     name: FreeRTOS PAL (POSIX simulator)
     runs-on: ubuntu-latest
