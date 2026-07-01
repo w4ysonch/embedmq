@@ -323,9 +323,9 @@ while (1) {
 void embedmq_destroy(embedmq_t *q);
 ```
 
-Stop the consumer thread and release resources. Blocks until the consumer thread has exited
-cleanly, then frees all memory (dynamic mode) or zeroes the handle (static mode — the
-caller's buffer itself is not freed).
+Stop the consumer thread and release resources. Drains all pending messages from the ring
+buffer before the consumer thread exits, then frees all memory (dynamic mode) or zeroes the
+handle (static mode — the caller's buffer itself is not freed).
 
 | Parameter | Description |
 |---|---|

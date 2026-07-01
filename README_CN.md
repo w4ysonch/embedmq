@@ -74,8 +74,7 @@ int main(void)
     battery_t b = { .level = 85, .voltage = 4.05f };
     embedmq_post(q, "battery.changed", &b, sizeof(b));
 
-    sleep(1);
-    embedmq_destroy(q);
+    embedmq_destroy(q);  /* 阻塞直到所有待处理消息分发完毕 */
 }
 ```
 
