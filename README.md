@@ -156,17 +156,69 @@ q.publish_id(uuid, &info, sizeof(info));
 
 ---
 
+## Architecture
+
+### Dispatch flow
+
+```mermaid
+flowchart LR
+    classDef producer fill:#2d6a4f,stroke:#52b788,color:#fff
+    classDef buffer   fill:#1d3557,stroke:#457b9d,color:#fff
+    classDef sync     fill:#7b2d8b,stroke:#c77dff,color:#fff
+    classDef consumer fill:#6d3b47,stroke:#e07a5f,color:#fff
+    classDef handler  fill:#3d405b,stroke:#81b29a,color:#fff
+
+    P1(["Producer A"]):::producer
+    P2(["Producer B"]):::producer
+    RB[/"Ring Buffer<br/>[uuid · len · payload]"/]:::buffer
+    SEM(["Semaphore"]):::sync
+    CT(["Consumer Thread"]):::consumer
+    HT[/"Handler Table<br/>sorted by UUID"/]:::consumer
+    H1(["Handler X"]):::handler
+    H2(["Handler Y"]):::handler
+
+    P1 -- "embedmq_post()<br/>mutex + memcpy" --> RB
+    P2 -- "embedmq_post_id()<br/>mutex + memcpy" --> RB
+    P1 -- "sem_give" --> SEM
+    P2 -- "sem_give" --> SEM
+    SEM -- "sem_take<br/>(blocks)" --> CT
+    RB -- "emq_ring_read()<br/>binary search" --> CT
+    CT -- "dispatch" --> HT
+    HT --> H1
+    HT --> H2
+```
+
+### Static mode memory layout
+
+```mermaid
+block-beta
+  columns 4
+  A["struct embedmq_s<br/>(control block)"]:1
+  B["handler table<br/>N × {uuid,fn,ctx}"]:1
+  C["ring buffer<br/>queue_size bytes"]:1
+  D["dispatch buf<br/>max_msg_size bytes"]:1
+
+  style A fill:#1d3557,stroke:#457b9d,color:#fff
+  style B fill:#2d6a4f,stroke:#52b788,color:#fff
+  style C fill:#6d3b47,stroke:#e07a5f,color:#fff
+  style D fill:#3d405b,stroke:#81b29a,color:#fff
+```
+
+---
+
 ## Performance
 
 Measured on x86-64 Linux, Release build, single producer + consumer:
 
 | Benchmark | Result |
 |---|---|
-| `embedmq_post()` throughput | **~3.0M msgs/sec** |
-| `embedmq_post_id()` throughput (UUID cached) | **~3.0M msgs/sec** |
+| `embedmq_post()` throughput | **~2.9M msgs/sec** |
+| `embedmq_post_id()` throughput (UUID cached) | **~3.4M msgs/sec** |
 | End-to-end latency avg (post → handler) | **~38 µs** |
-| End-to-end latency min | **~7 µs** |
+| End-to-end latency min | **~9 µs** |
 | `embedmq_uuid()` hash speed | **~45M hashes/sec** (~22 ns/hash) |
+
+![benchmark](docs/images/benchmark.png)
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build && ./build/benchmark

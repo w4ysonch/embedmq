@@ -156,17 +156,69 @@ q.publish_id(uuid, &info, sizeof(info));
 
 ---
 
+## 架构
+
+### 消息分发流程
+
+```mermaid
+flowchart LR
+    classDef producer fill:#2d6a4f,stroke:#52b788,color:#fff
+    classDef buffer   fill:#1d3557,stroke:#457b9d,color:#fff
+    classDef sync     fill:#7b2d8b,stroke:#c77dff,color:#fff
+    classDef consumer fill:#6d3b47,stroke:#e07a5f,color:#fff
+    classDef handler  fill:#3d405b,stroke:#81b29a,color:#fff
+
+    P1(["生产者 A"]):::producer
+    P2(["生产者 B"]):::producer
+    RB[/"环形缓冲区<br/>[uuid · len · payload]"/]:::buffer
+    SEM(["信号量"]):::sync
+    CT(["消费者线程"]):::consumer
+    HT[/"Handler 表<br/>按 UUID 排序"/]:::consumer
+    H1(["Handler X"]):::handler
+    H2(["Handler Y"]):::handler
+
+    P1 -- "embedmq_post()<br/>mutex + memcpy" --> RB
+    P2 -- "embedmq_post_id()<br/>mutex + memcpy" --> RB
+    P1 -- "sem_give" --> SEM
+    P2 -- "sem_give" --> SEM
+    SEM -- "sem_take<br/>（阻塞）" --> CT
+    RB -- "emq_ring_read()<br/>二分查找" --> CT
+    CT -- "dispatch" --> HT
+    HT --> H1
+    HT --> H2
+```
+
+### 静态模式内存布局
+
+```mermaid
+block-beta
+  columns 4
+  A["struct embedmq_s<br/>（控制块）"]:1
+  B["handler 表<br/>N × {uuid,fn,ctx}"]:1
+  C["环形缓冲区<br/>queue_size 字节"]:1
+  D["dispatch 缓冲区<br/>max_msg_size 字节"]:1
+
+  style A fill:#1d3557,stroke:#457b9d,color:#fff
+  style B fill:#2d6a4f,stroke:#52b788,color:#fff
+  style C fill:#6d3b47,stroke:#e07a5f,color:#fff
+  style D fill:#3d405b,stroke:#81b29a,color:#fff
+```
+
+---
+
 ## 性能
 
 x86-64 Linux、Release 构建、单生产者 + 消费线程：
 
 | 测试项 | 结果 |
 |---|---|
-| `embedmq_post()` 吞吐量 | **300 万条/秒** |
-| `embedmq_post_id()` 吞吐量（UUID 已缓存） | **300 万条/秒** |
+| `embedmq_post()` 吞吐量 | **~290 万条/秒** |
+| `embedmq_post_id()` 吞吐量（UUID 已缓存） | **~340 万条/秒** |
 | 端到端平均延迟（post → handler） | **~38 µs** |
-| 端到端最小延迟 | **~7 µs** |
+| 端到端最小延迟 | **~9 µs** |
 | `embedmq_uuid()` hash 速度 | **4500 万次/秒**（~22 ns/次） |
+
+![benchmark](docs/images/benchmark.png)
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build && ./build/benchmark
